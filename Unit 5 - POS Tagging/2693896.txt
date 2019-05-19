@@ -1,0 +1,95 @@
+#This file has small examples that are meant to be run individually
+#   in the Python shell
+import nltk
+
+# POS Tagged Corpora:  Brown and Penn Treebank
+# the Brown corpus has its own set of POS tags
+from nltk.corpus import brown
+
+# the tagged_sents function gives POS tagged sentences and tagged_words gives POS tagged wordsbrown.tagged_sents()[:2]
+brown.tagged_words()[:50]
+
+# Each tagged word is a pair, which Python calls a tuple  
+#  it behaves like a list except that you can't change the elements (immutable)
+wordtag = brown.tagged_words()[0]
+wordtag
+type(wordtag)
+wordtag[0]
+wordtag[1]
+
+# the brown corpus can also be accessed by category
+brown.categories()
+
+brown_humor_tagged = brown.tagged_words(categories='humor', tagset='universal')
+brown_humor_tagged[:50]
+
+# the chat corpus uses Penn POS tags
+nltk.corpus.nps_chat.tagged_words()[:50]
+
+# Penn treebank
+from nltk.corpus import treebank
+
+# use corpus methods to get POS tagged sentences and plain words without tags
+treebank_tokens = treebank.words()
+treebank_tokens[:50]
+
+treebank_tagged_words = treebank.tagged_words()
+treebank_tagged_words[:50]
+
+treebank_tagged = treebank.tagged_sents()
+treebank_tagged[:2]
+
+# Frequency distribution of tags in Penn Treebank
+tag_fd = nltk.FreqDist(tag for (word, tag) in treebank_tagged_words)
+tag_fd.keys()
+for tag,freq in tag_fd.most_common():
+    print (tag, freq)
+
+
+
+## POS Tagging
+
+# Separating the data into training and test data
+size = int(len(treebank_tagged) * 0.9)
+treebank_train = treebank_tagged[:size]
+treebank_test = treebank_tagged[size:]
+
+# Default Tagger assign 'NN' to every word
+t0 = nltk.DefaultTagger('NN')t0.tag(treebank_tokens[:50])# evaluate function applies the tagger t0 to the untagged version of treebank
+#   and compares with the tagged versiont0.evaluate(treebank_test)
+
+# Unigram tagger learns tag with the highest probability for each word
+t1 = nltk.UnigramTagger(treebank_train)t1.tag(treebank_tokens[:50])t1.evaluate(treebank_test)
+
+# Bigram Tagging with Backoff to Combine Taggers
+t0 = nltk.DefaultTagger('NN')
+t1 = nltk.UnigramTagger(treebank_train, backoff=t0)
+t1.evaluate(treebank_test)
+
+t2 = nltk.BigramTagger(treebank_train, backoff=t1)
+
+# Accuracy with BigramTagger: 
+t2.evaluate(treebank_test)
+
+# Using the bigram tagger on some new text
+text = "Three Calgarians have found a rather unusual way of leaving snow and ice behind. They set off this week on foot and by camels on a grueling trek across the burning Arabian desert."
+
+# But we should separate the text into sentences first
+textsplit = nltk.sent_tokenize(text)
+textsplit
+
+# apply the word tokenizer to each sentence
+tokentext = [nltk.word_tokenize(sent) for sent in textsplit]
+tokentext
+
+# use the t2 bigram tagger to tag each sentence tokens
+taggedtext = [t2.tag(tokens) for tokens in tokentext]
+taggedtext
+
+# use the Stanford POS tagger to tag each sentence tokens
+taggedtextStanford = [nltk.pos_tag(tokens) for tokens in tokentext]
+taggedtextStanford
+
+
+
+
