@@ -1,0 +1,226 @@
+import nltk
+
+# movie review sentences
+from nltk.corpus import sentence_polarity
+import random
+
+sentences = sentence_polarity.sents()
+len(sentences)
+type(sentences)
+sentence_polarity.categories()
+
+
+sentences[:4]
+
+pos_sents = sentence_polarity.sents(categories='pos')
+len(pos_sents)
+neg_sents = sentence_polarity.sents(categories='neg')
+len(neg_sents)
+
+## setup the movie reviews sentences for classification
+# create a list of documents, each document is list of words in sentence paired with category
+documents = [(sent, cat) for cat in sentence_polarity.categories() 
+	for sent in sentence_polarity.sents(categories=cat)]
+documents[0]
+documents[-1]
+random.shuffle(documents)
+
+# look at the first document - consists of all the words in the review
+# followed by the category
+documents[0]
+documents[-1]
+
+# get all words from all movie_reviews and put into a frequency distribution
+#   note lowercase, but no stemming or stopwords
+all_words_list = [word for (sent,cat) in documents for word in sent]
+all_words = nltk.FreqDist(all_words_list)
+# get the 2000 most frequently appearing keywords in the corpus
+word_items = all_words.most_common(2000)
+word_features = [word for (word,count) in word_items]
+
+
+# define features (keywords) of a document for a BOW/unigram baseline
+# each feature is 'contains(keyword)' and is true or false depending
+# on whether that keyword is in the document
+def document_features(document, word_features):
+    document_words = set(document)
+    features = {}
+    for word in word_features:
+        features['contains({})'.format(word)] = (word in document_words)
+    return features
+
+# get features sets for a document, including keyword features and category feature
+featuresets = [(document_features(d, word_features), c) for (d, c) in documents]
+
+# the feature sets are 2000 words long so you may not want to look at one
+featuresets[0]
+
+# training using naive Baysian classifier, training set is 90% of data
+train_set, test_set = featuresets[1000:], featuresets[:1000]
+classifier = nltk.NaiveBayesClassifier.train(train_set)
+
+# evaluate the accuracy of the classifier
+nltk.classify.accuracy(classifier, test_set)
+
+# the accuracy result may vary since we randomized the documents
+
+# show which features of classifier are most informative
+classifier.show_most_informative_features(30)
+
+####   adding features   ####
+# First run the program in the file Subjectivity.py to load the subjectivity lexicon
+# copy and paste the definition of the readSubjectivity functions
+# create a path to where the subjectivity file resides on your disk
+# this example is for my mac
+# nancymacpath = "/Users/njmccrac1/AAAdocs/research/subjectivitylexicon/hltemnlp05clues/subjclueslen1-HLTEMNLP05.tff"
+
+# create your own path to the subjclues file
+SLpath = ""
+SL = readSubjectivity(SLpath)
+
+# how many words are in the dictionary
+len(SL.keys())
+
+# look at words in the dictionary
+SL['absolute']
+SL['shabby']
+# note what happens if the word is not there
+SL['dog']
+# use multiple assignment to get the 4 items
+strength, posTag, isStemmed, polarity = SL['absolute']
+
+# define features that include word counts of subjectivity words
+# negative feature will have number of weakly negative words +
+#    2 * number of strongly negative words
+# positive feature has similar definition
+#    not counting neutral words
+def SL_features(document, word_features, SL):
+    document_words = set(document)
+    features = {}
+    for word in word_features:
+        features['contains({})'.format(word)] = (word in document_words)
+    # count variables for the 4 classes of subjectivity
+    weakPos = 0
+    strongPos = 0
+    weakNeg = 0
+    strongNeg = 0
+    for word in document_words:
+        if word in SL:
+            strength, posTag, isStemmed, polarity = SL[word]
+            if strength == 'weaksubj' and polarity == 'positive':
+                weakPos += 1
+            if strength == 'strongsubj' and polarity == 'positive':
+                strongPos += 1
+            if strength == 'weaksubj' and polarity == 'negative':
+                weakNeg += 1
+            if strength == 'strongsubj' and polarity == 'negative':
+                strongNeg += 1
+            features['positivecount'] = weakPos + (2 * strongPos)
+            features['negativecount'] = weakNeg + (2 * strongNeg)      
+    return features
+
+SL_featuresets = [(SL_features(d, word_features, SL), c) for (d, c) in documents]
+
+# features in document 0
+SL_featuresets[0][0]['positivecount']
+SL_featuresets[0][0]['negativecount']
+
+# this gives the label of document 0
+SL_featuresets[0][1]
+# number of features for document 0
+len(SL_featuresets[0][0].keys())
+
+train_set, test_set = SL_featuresets[1000:], SL_featuresets[:1000]
+classifier = nltk.NaiveBayesClassifier.train(train_set)
+nltk.classify.accuracy(classifier, test_set)
+
+
+###  Negation words
+# Negation words "not", "never" and "no"
+# Not can appear in contractions of the form "doesn", "'", "t"
+## if', 'you', 'don', "'", 't', 'like', 'this', 'film', ',', 'then', 'you', 'have', 'a', 'problem', 'with', 'the', 'genre', 'itself', 
+# One strategy with negation words is to negate the word following the negation word
+#   other strategies negate all words up to the next punctuation
+# Strategy is to go through the document words in order adding the word features,
+#   but if the word follows a negation words, change the feature to negated word
+# Start the feature set with all 2000 word features and 2000 Not word features set to false
+
+>>> for sent in list(sentences)[:50]:
+   for word in sent:
+     if (word.endswith("n't")):
+       print(sent)
+
+
+negationwords = ['no', 'not', 'never', 'none', 'nowhere', 'nothing', 'noone', 'rather', 'hardly', 'scarcely', 'rarely', 'seldom', 'neither', 'nor']
+
+def NOT_features(document, word_features, negationwords):
+    features = {}
+    for word in word_features:
+        features['contains({})'.format(word)] = False
+        features['contains(NOT{})'.format(word)] = False
+    # go through document words in order
+    for i in range(0, len(document)):
+        word = document[i]
+        if ((i + 1) < len(document)) and ((word in negationwords) or (word.endswith("n't"))):
+            i += 1
+            features['contains(NOT{})'.format(document[i])] = (document[i] in word_features)
+        else:
+            features['contains({})'.format(word)] = (word in word_features)
+    return features
+
+NOT_featuresets = [(NOT_features(d, word_features, negationwords), c) for (d, c) in documents]
+NOT_featuresets[0][0]['contains(NOTlike)']
+NOT_featuresets[0][0]['contains(always)']
+
+train_set, test_set = NOT_featuresets[1000:], NOT_featuresets[:1000]
+classifier = nltk.NaiveBayesClassifier.train(train_set)
+nltk.classify.accuracy(classifier, test_set)
+
+classifier.show_most_informative_features(30)
+Most Informative Features
+     contains(ludicrous) = False             neg : pos    =     14.8 : 1.0
+   contains(outstanding) = True              pos : neg    =     13.9 : 1.0
+        contains(avoids) = False             pos : neg    =     12.2 : 1.0
+          contains(slip) = False             pos : neg    =     11.5 : 1.0
+    contains(NOTperfect) = True              pos : neg    =     10.8 : 1.0
+    contains(astounding) = False             pos : neg    =     10.8 : 1.0
+   contains(fascination) = False             pos : neg    =     10.8 : 1.0
+          contains(3000) = False             neg : pos    =     10.5 : 1.0
+         contains(sucks) = False             neg : pos    =     10.4 : 1.0
+     contains(insulting) = False             neg : pos    =     10.4 : 1.0
+      contains(thematic) = False             pos : neg    =     10.2 : 1.0
+        contains(hudson) = False             neg : pos    =      9.8 : 1.0
+       contains(conveys) = False             pos : neg    =      9.5 : 1.0
+         contains(dread) = False             pos : neg    =      9.5 : 1.0
+     contains(stupidity) = False             neg : pos    =      9.1 : 1.0
+    contains(incoherent) = False             neg : pos    =      9.1 : 1.0
+       contains(NOTsave) = True              neg : pos    =      9.1 : 1.0
+          contains(gump) = False             pos : neg    =      8.9 : 1.0
+        contains(annual) = False             pos : neg    =      8.9 : 1.0
+     contains(strengths) = False             pos : neg    =      8.9 : 1.0
+
+### for the Exercise, define a stop word list ###
+
+stopwords = nltk.corpus.stopwords.words('english')
+len(stopwords)
+stopwords
+
+# remove some negation words 
+newstopwords = [word for word in stopwords if word not in negationwords]
+len(newstopwords)
+newstopwords
+
+# remove stop words from the all words list
+new_all_words_list = [word for (sent,cat) in documents for word in sent if word not in newstopwords]
+
+# continue to define a new all words dictionary, get the 2000 most common as new_word_features
+new_all_words = nltk.FreqDist(new_all_words_list)
+new_word_items = new_all_words.most_common(2000)
+
+new_word_features = [word for (word,count) in new_word_items]
+new_word_features[:30]
+
+# now re-run one of the feature set definitions with the new_word_features instead of word_features
+
+
+
