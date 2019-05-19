@@ -1,0 +1,84 @@
+# Week 3
+# This file has small examples that are meant to be run individually
+#   in the Python interpreter or IDLE shell
+
+# Getting started to process a text example
+import nltk
+from nltk import FreqDist
+
+# get the text of the book Emma from the Gutenberg corpus, tokenize it,
+#   and reduce the tokens to lowercase.
+file0 = nltk.corpus.gutenberg.fileids( ) [0]
+emmatext = nltk.corpus.gutenberg.raw(file0)
+emmatokens = nltk.word_tokenize(emmatext) 
+emmawords = [w.lower( ) for w in emmatokens] 
+
+# Creating a frequency distribution of words
+emmawords[:110]
+ndist = FreqDist(emmawords)
+
+# print the top 30 tokens by frequency
+nitems = ndist.most_common(30)
+for item in nitems:
+    print (item[0], item[1])
+
+		
+# Regular Expression to match non-alphabetic characters
+import re
+# this regular expression pattern matches any word that contains all non-alphabetical#   lower-case characters [^a-z]+# the beginning ^ and ending $ require the match to begin and end on a word boundary pattern = re.compile('^[^a-z]+$')nonAlphaMatch = pattern.match('**')#  if it matched, print a messageif nonAlphaMatch: print ('matched non-alphabetical')
+# function that takes a word and returns true if it consists only
+#   of non-alphabetic characters  (assumes import re)
+def alpha_filter(w):
+  # pattern to match word of non-alphabetical characters
+  pattern = re.compile('^[^a-z]+$')
+  if (pattern.match(w)):
+    return True
+  else:
+    return False
+# apply the function to emmawordsalphaemmawords = [w for w in emmawords if not alpha_filter(w)]alphaemmawords[:100]
+len(alphaemmawords)# get a list of stopwords from nltkstopwords = nltk.corpus.stopwords.words('english')len(stopwords)
+stopwords
+
+# test if a word is in a list by using the Python keyword "in"
+word = 'the'
+if word in stopwords:
+    print (word + ' is a stopword!')
+
+stoppedemmawords = [w for w in alphaemmawords if not w in stopwords]len(stoppedemmawords)
+
+# use this list for a better frequency distribution
+emmadist = FreqDist(stoppedemmawords)
+emmaitems = emmadist.most_common(30)
+for item in emmaitems:
+  print(item)
+# Bigrams and Bigram frequency distribution
+emmabigrams = list(nltk.bigrams(emmawords))
+emmabigrams[:20]
+
+# setup for bigrams and bigram measures
+from nltk.collocations import *
+bigram_measures = nltk.collocations.BigramAssocMeasures()
+
+# create the bigram finder and score the bigrams by frequency
+finder = BigramCollocationFinder.from_words(emmawords)scored = finder.score_ngrams(bigram_measures.raw_freq)
+type(scored)
+first = scored[0]
+type(first)
+first
+
+for bscore in scored[:30]:    print (bscore)# apply a filter to remove non-alphabetical tokensfinder.apply_word_filter(alpha_filter)scored = finder.score_ngrams(bigram_measures.raw_freq)for bscore in scored[:30]:    print (bscore)
+
+# apply a filter to remove stop words
+finder.apply_word_filter(lambda w: w in stopwords)scored = finder.score_ngrams(bigram_measures.raw_freq)for bscore in scored[:20]:    print (bscore)# apply a filter (on a new finder) to remove low frequency words
+finder2 = BigramCollocationFinder.from_words(emmawords)finder2.apply_freq_filter(2)scored = finder2.score_ngrams(bigram_measures.raw_freq)for bscore in scored[:20]:    print (bscore)# apply a filter on both words of the ngramfinder2.apply_ngram_filter(lambda w1, w2: len(w1) < 2)
+scored = finder2.score_ngrams(bigram_measures.raw_freq)
+for bscore in scored[:20]:    print (bscore)
+
+# pointwise mutual information
+finder3 = BigramCollocationFinder.from_words(emmawords)
+scored = finder3.score_ngrams(bigram_measures.pmi)
+for bscore in scored[:20]:    print (bscore)
+# bigrams in order by Pointwise Mutual Information.scored = finder.score_ngrams(bigram_measures.pmi)for bscore in scored[:30]:    print (bscore)
+
+finder.apply_freq_filter(5)
+scored = finder.score_ngrams(bigram_measures.pmi)for bscore in scored[:30]:    print (bscore)
