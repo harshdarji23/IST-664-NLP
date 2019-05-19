@@ -1,0 +1,74 @@
+# Week 1
+# This file has small examples that are meant to be run individually
+#   in the Python interpreter or IDLE shell
+
+# text from Moby Dick
+
+from nltk.book import *
+text1
+sent1
+sent1text = 'Call me Ishmael.'
+
+# searching text
+text1.concordance('monstrous')
+text2
+text2.concordance('affection')
+
+text1.similar('monstrous')
+text2.similar('monstrous')
+
+# Counting Vocabulary
+len(text3)
+len(text4)
+len(sorted(set(text3)))
+
+sorted(set(text3))[:30]
+
+from __future__ import division
+len(text3) / len(set(text3))
+
+text3.count("smote")
+100 * text3.count('smote')/len(text3)
+100 * text3.count('a')/len(text3)
+
+
+# Getting started to process a text example not already tokenized
+import nltk
+from nltk import FreqDist
+
+# get the text of the book Emma from the Gutenberg corpus, tokenize it,
+#   and reduce the tokens to lowercase.
+print nltk.corpus.gutenberg.fileids( ) 
+
+file0 = nltk.corpus.gutenberg.fileids( ) [0]
+file0
+
+emmatext = nltk.corpus.gutenberg.raw(file0)
+emmatext[:120]     # the first 120 characters of the string emmatext
+
+emmatokens = nltk.word_tokenize(emmatext)
+emmatokens[:50]   # the first 50 tokens in the list of tokens 
+
+emmawords = [w.lower( ) for w in emmatokens] 
+emmawords[:50]
+len(emmawords)
+
+# Here is a different way to define emmawords using a for loop, instead of a list comprehension
+emmawords = []     # start with an empty listfor w in emmatokens:    emmawords.append(w.lower())     # add each lowercased word to the listemmawords[:50]
+# Create a Python dictionary for a frequency distribution
+
+emmadict = {}    # start with an empty dictionary
+
+# create a dictionary where the words are keys and the values are the counts (frequency) of each word
+for w in emmawords:    if w in emmadict:        emmadict[w] += 1    else:        emmadict[w] = 1
+
+# how many words are keys
+len(emmadict.keys())
+
+# counts of three of the words
+emmadict['the']
+emmadict['of']
+emmadict['a']
+
+
+
