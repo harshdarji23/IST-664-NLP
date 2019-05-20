@@ -17,7 +17,7 @@ Toolkit (NLTK) and some rudimentary use of the programming language Python
 * HW3 - Exercise on Comparing the baseline performance of using just word features with some modified or additional features. 
 
 ## Project:
-### Text Summarization -> https://github.com/harshdarji23/Text-Summarization-Using-Iterative-Approach-NLP
+### Text Summarization -> https://github.com/harshdarji23/Text-Summarization-An-Extractive-Method-NLP
 
 ### Reference Books:
 1. Speech and Language Processing. Daniel Jurafsky & James H. Martin, 2nd ed. 2008. PrenticeHall- https://web.stanford.edu/~jurafsky/slp3/
