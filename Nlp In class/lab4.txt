@@ -1,0 +1,228 @@
+# Lab Week 4
+# This file has small examples that are meant to be run individually
+#   in the Python shell
+
+import nltk
+
+# text from online gutenberg
+>>> from urllib import request
+>>> url = "http://www.gutenberg.org/files/2554/2554-0.txt"
+>>> response = request.urlopen(url)
+>>> raw = response.read().decode('utf8')
+>>> type(raw)
+>>> len(raw)
+>>> raw[:200]
+
+# text from online news article (see NLTK book chapter 3)
+>>> blondurl = "http://news.bbc.co.uk/2/hi/health/2284783.stm"
+>>> html = request.urlopen(blondurl).read().decode('utf8')
+>>> html[:1000]
+
+>>> from bs4 import BeautifulSoup
+>>> braw = BeautifulSoup(html, "html.parser").get_text()
+>>> braw[:60]
+>>> btokens = nltk.word_tokenize(braw)
+>>> btokens[:100]
+# continue to select only the tokens of the text
+
+# OPTIONAL
+# to get the path to the directory of IDLE or the Python shell:
+>>> import os
+>>> os.getcwd()
+## put the file in that directory
+>>> f = open(‘desert.txt’)
+>>> rawtext = f.read()
+# END OPTIONAL
+
+## reading text from a file by specifying the full path
+## put the path of your machine here
+>>> fin = open(‘H:\NLPclass\LabExamplesWeek4\desert.txt’)
+>>> rawtext = fin.read()
+
+
+## Mac users, put your path in a format similar to this
+>>> fin = open('/Users/njmccrac/AAAdocs/NLPfall2016/labs/LabExamplesWeek4/desert.txt')
+>>> rawtext = fin.read()
+
+## get text from a file, create tokens, and continue to use text
+>>> tokens = nltk.word_tokenize(rawtext)
+>>> text = nltk.Text(tokens)
+>>> text.concordance(‘pass’)
+# close file at the end
+>>> fin.close()
+
+### Stemming and Lemmatization
+## get text from a file and create tokens (use \ on PCs, and / on Macs)
+>>> fin = open(‘<put path here>CrimeAndPunishment.txt')
+>>> crimetext = fin.read()
+
+>>> crimetokens = nltk.word_tokenize(crimetext)
+>>> len(crimetokens)
+>>> crimetokens[:100]
+#use NLTK's stemmers (section 3.6 in NLTK book)
+>>> porter = nltk.PorterStemmer()
+>>> lancaster = nltk.LancasterStemmer()
+
+# compare Porter and Lancaster stemmers on the tokens
+>>> crimePstem = [porter.stem(t) for t in crimetokens]
+>>> crimePstem[:200]
+
+>>> crimeLstem = [lancaster.stem(t) for t in crimetokens]
+>>> crimeLstem[:200]
+# NLTK has a lemmatizer that uses WordNet as a dictionary
+>>> wnl = nltk.WordNetLemmatizer()
+>>> crimeLemma = [wnl.lemmatize(t) for t in crimetokens]
+>>> crimeLemma[:200]
+
+
+# NLTK has a lemmatizer that uses WordNet as a dictionary
+>>> wnl = nltk.WordNetLemmatizer()
+>>> crimeLemma = [wnl.lemmatize(t) for t in crimetokens]
+>>> crimeLemma[:200]
+
+# This file has small examples that are meant to be run individually
+#   in the Python shell
+import nltk
+from nltk import *             
+
+file0 = nltk.corpus.gutenberg.fileids( ) [0]
+emmatext = nltk.corpus.gutenberg.raw(file0)
+
+type(emmatext)
+len(emmatext)
+shorttext	
+shorttext = emmatext[:150]
+
+print(shorttext)
+# print the first 20 characters in the str emmatext as one string
+print(emmatext[:20])
+
+# print the first 20 characters in emmatext by iterating over the characters
+for c in emmatext[:20]:
+  print(c)
+
+## Review of strings and string operations
+string1 = 'Monty Python'
+string2 = 'Holy Grail'
+string1 + string2
+string1 + ' and the ' + string2
+
+# replace end-of-line character with a space
+emmatext[:150]
+newemmatext = emmatext.replace('\n', ' ')
+newemmatext[:150]
+
+
+### Development of regular expressions for tokenizing text
+import re
+# pattern to match words, i.e. anything with a sequence of word characters
+shorttext = 'That book is interesting.'
+pword = re.compile('\w+')
+
+re.findall(pword, shorttext)
+
+
+#Here is how you can save the result to a TXT file
+f = re.findall(pword, shorttext)
+resultfile = open(‘result.txt’, ‘w’)
+for item in f:
+	resultfile.write(“%s\n” % item)
+
+
+specialtext = 'That U.S.A. poster-print costs $12.40, but with 10% off.'
+re.findall(pword, specialtext)
+
+# pattern to match words with internal hyphens
+ptoken = re.compile('(\w+(-\w+)*)')
+re.findall(ptoken, specialtext)
+re.findall(ptoken, 'end-of-line character')
+
+# ignore the group of the inner parentheses 
+ptoken = re.compile('(\w+(?:-\w+)*)')
+
+# abbreviations like U.S.A.
+pabbrev = re.compile('((?:[A-Z]\.)+)')
+re.findall(pabbrev, specialtext)
+
+# combine this pattern with the words to make more general tokens
+ptoken = re.compile('(\w+(?:-\w+)*|(?:[A-Z]\.)+)')
+re.findall(ptoken, specialtext)
+
+# switch the order of the patterns to first match abbreviations and then other words
+ptoken = re.compile('(([A-Z]\.)+|\w+(-\w+)*)')
+re.findall(ptoken, specialtext)
+
+# add expression for currency
+ptoken = re.compile('(([A-Z]\.)+|\w+(-\w+)*|\$?\d+(\.\d+)?)')
+re.findall(ptoken, specialtext)
+
+# this is an equivalent regular expression except that it has extra parentheses
+ptoken = re.compile(r'''((?:[A-Z]\.)+) # abbreviations, e.g. U.S.A.
+   | (\w+(?:-\w+)*) # words with internal hyphens
+   | (\$?\d+(?:\.\d+)?) # currency, like $12.40
+   ''', re.X) # verbose flag
+
+re.findall(ptoken, specialtext)
+
+
+### using NLTK's regular expression tokenizer
+
+# first define a multi-line string that is a regular expression
+
+pattern = r''' (?x) 	# set flag to allow verbose regexps
+        (?:[A-Z]\.)+    # abbreviations, e.g. U.S.A.
+        | \$?\d+(?:\.\d+)?%?    # currency and percentages, $12.40, 50%
+        | \w+(?:-\w+)*  # words with internal hyphens
+        | \.\.\.        # ellipsis
+        | [][.,;"'?():-_%']    # separate tokens
+        '''
+ptoken = re.compile(pattern)
+re.findall(ptoken, specialtext)
+
+# the nltk regular expression tokenizer compiles the re pattern, applies it to the text
+#  and uses the matching groups to return a list of only the matched tokens
+nltk.regexp_tokenize(shorttext, pattern)
+nltk.regexp_tokenize(specialtext, pattern)
+
+# built-in word tokenizer
+nltk.word_tokenize(specialtext)
+
+# Tokenizer for Twitter
+tweetPattern = r''' (?x)	# set flag to allow verbose regexps
+      (?:https?://|www)\S+      # simple URLs
+      | (?::-\)|;-\))		# small list of emoticons
+      | &(?:amp|lt|gt|quot);    # XML or HTML entity
+      | \#\w+                 # hashtags
+      | @\w+                  # mentions   
+      | \d+:\d+               # timelike pattern
+      | \d+\.\d+              # number with a decimal
+      | (?:\d+,)+?\d{3}(?=(?:[^,]|$))   # number with a comma
+      | (?:[A-Z]\.)+                    # simple abbreviations
+      | (?:--+)               # multiple dashes
+      | \w+(?:-\w+)*          # words with internal hyphens or apostrophes
+      | ['\".?!,:;/]+         # special characters
+      '''
+
+tweet1 = "@natalieohayre I agree #hc09 needs reform- but not by crooked politicians who r clueless about healthcare! #tcot #fishy NO GOV'T TAKEOVER!"
+
+tweet2 = "To Sen. Roland Burris: Affordable, quality health insurance can't wait http://bit.ly/j63je #hc09 #IL #60660"
+
+tweet3 = "RT @karoli: RT @Seriou: .@whitehouse I will stand w/ Obama on #healthcare,  I trust him. #p2 #tlot"
+
+nltk.regexp_tokenize(tweet1,tweetPattern)
+nltk.regexp_tokenize(tweet2,tweetPattern)
+nltk.regexp_tokenize(tweet3,tweetPattern)
+
+# NLTK built-in tokenizer (from TweetMotif)
+from nltk.tokenize import TweetTokenizer
+ttokenizer.tokenize(tweet1)
+
+# sentence example for the exercises
+
+sent = "Mr. Black and Mrs. Brown attended the lecture by Dr. Gray, but Gov. White wasn't there."
+
+nltk.regexp_tokenize(sent, pattern)
+
+
+
+
